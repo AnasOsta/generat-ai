@@ -1,7 +1,10 @@
 import { auth } from "@clerk/nextjs/server";
 import { GoogleGenerativeAI } from "@google/generative-ai";
 
-const apiKey: string = process.env.GEMINI_API_KEY;
+if (!process.env.GEMINI_API_KEY) {
+  throw new Error("Gemini API key not found");
+}
+const apiKey = process.env.GEMINI_API_KEY;
 const genAI = new GoogleGenerativeAI(apiKey);
 
 const model = genAI.getGenerativeModel({
