@@ -1,3 +1,4 @@
+import { auth } from "@clerk/nextjs/server";
 import { GoogleGenerativeAI } from "@google/generative-ai";
 
 const apiKey: string = process.env.GEMINI_API_KEY;
@@ -16,25 +17,42 @@ const generationConfig = {
 };
 
 export async function POST(request: Request) {
-  const { messages } = await request.json();
-  const chatSession = model.startChat({
-    generationConfig,
-    // safetySettings: Adjust safety settings
-    // See https://ai.google.dev/gemini-api/docs/safety-settings
-    history: [
-      {
-        role: "user",
-        parts: [
-          {
-            text: " I have the ingredients above. Not sure what to cook for lunch. Show me a list of foods with the recipes.",
-          },
-        ],
-      },
-    ],
-  });
+  try {
+    const { userId } = auth();
+    const body = await request.json();
+    const { messages } = body;
 
-  const result = await chatSession.sendMessage(messages);
-  console.log(result.response.text());
+    if (!userId) {
+      return new Response("Unauthorized", { status: 401 });
+    }
 
-  return new Response(result.response.text());
+    if (!apiKey) {
+      return new Response("Gemini API key not found", { status: 500 });
+    }
+
+    if (!messages) {
+      return new Response("No messages provided", { status: 400 });
+    }
+
+    const chatSession = model.startChat({
+      generationConfig,
+      // safetySettings: Adjust safety settings
+      // See https://ai.google.dev/gemini-api/docs/safety-settings
+      history: [
+        {
+          role: "user",
+          parts: [
+            {
+              text: " I have the ingredients above. Not sure what to cook for lunch. Show me a list of foods with the recipes.",
+            },
+          ],
+        },
+      ],
+    });
+    const result = await chatSession.sendMessage(messages);
+    return new Response(result.response.text());
+  } catch (err) {
+    console.log(err);
+    return new Response("Internal Error", { status: 500 });
+  }
 }
