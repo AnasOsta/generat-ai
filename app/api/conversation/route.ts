@@ -9,6 +9,7 @@ const genAI = new GoogleGenerativeAI(apiKey);
 
 const model = genAI.getGenerativeModel({
   model: "gemini-1.5-flash",
+  systemInstruction: "long, 2 paragraph",
 });
 
 const generationConfig = {
@@ -42,13 +43,10 @@ export async function POST(request: Request) {
       // safetySettings: Adjust safety settings
       // See https://ai.google.dev/gemini-api/docs/safety-settings
       history: [
+        { role: "user", parts: [{ text: "Hello" }] },
         {
-          role: "user",
-          parts: [
-            {
-              text: " I have the ingredients above. Not sure what to cook for lunch. Show me a list of foods with the recipes.",
-            },
-          ],
+          role: "model",
+          parts: [{ text: "Great to meet you. What would you like to know?" }],
         },
       ],
     });
